@@ -72,7 +72,7 @@
     "moment": "2.18.1",
     "moment-timezone": "0.5.13",
     "multer": "1.3.0",
-    "mysql": "2.14.1",
+    "mysql": "mysqljs/mysql#e8fea7068476ac65d78532bbf786d6393502f54b",
     "nconf": "0.8.4",
     "netjet": "1.1.3",
     "nodemailer": "0.7.1",
