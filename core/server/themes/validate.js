@@ -22,6 +22,13 @@ checkTheme = function checkTheme(theme, isZip) {
             onlyFatalErrors: config.get('env') === 'production'
         });
 
+        // @TODO: create issue
+        // this is a workaround as custom helpers are not getting validated properly
+        // this ignores all missing helper errors
+        if (checkedTheme.results.error.every(x => x.code === 'GS005-TPL-ERR')) {
+            return checkedTheme;
+        }
+
         // CASE: production and no fatal errors
         // CASE: development returns fatal and none fatal errors, theme is only invalid if fatal errors
         if (!checkedTheme.results.error.length ||
