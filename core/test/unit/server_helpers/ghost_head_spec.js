@@ -5,6 +5,7 @@ var should = require('should'), // jshint ignore:line
     moment = require('moment'),
     configUtils = require('../../utils/configUtils'),
     helpers = require('../../../server/helpers'),
+    imageSize = require('../../../server/utils/image-size'),
     proxy = require('../../../server/helpers/proxy'),
     settingsCache = proxy.settingsCache,
     api = proxy.api,
@@ -18,9 +19,15 @@ describe('{{ghost_head}} helper', function () {
         configUtils.restore();
     });
 
-    // TODO: stub `getImageDimensions` to make things faster
     beforeEach(function () {
-        sandbox.stub(api.clients, 'read').returns(new Promise.resolve({
+        /**
+         * Each test case here requests the image dimensions.
+         * The image path is e.g. localhost:port/favicon.ico, but no server is running.
+         * If we don't mock the image size utility, we run into lot's of timeouts.
+         */
+        sandbox.stub(imageSize, 'getImageSizeFromUrl').returns(Promise.resolve());
+
+        sandbox.stub(api.clients, 'read').returns(Promise.resolve({
             clients: [
                 {slug: 'ghost-frontend', secret: 'a1bcde23cfe5', status: 'enabled'}
             ]
@@ -42,7 +49,7 @@ describe('{{ghost_head}} helper', function () {
                 return localSettingsCache[key];
             });
 
-            configUtils.set('url', 'http://localhost:82832/');
+            configUtils.set('url', 'http://localhost:65530/');
         });
 
         it('returns meta tag string on paginated index page without structured data and schema', function (done) {
@@ -52,9 +59,9 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/page\/2\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/page\/2\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.not.match(/<meta name="description"/);
                 rendered.string.should.not.match(/<meta property="og/);
                 rendered.string.should.not.match(/<script type=\"application\/ld\+json\">/);
@@ -70,28 +77,28 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/" \/>/);
                 rendered.string.should.match(/<meta name="referrer" content="no-referrer-when-downgrade" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="website" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/blog-cover.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/blog-cover.png" \/>/);
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/blog-cover.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/blog-cover.png" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Website"/);
                 rendered.string.should.match(/"publisher": {\n        "@type": "Organization",\n        "name": "Ghost",/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/"/);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/blog-cover.png"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/blog-cover.png"/);
                 rendered.string.should.match(/"description": "blog description"/);
 
                 done();
@@ -130,34 +137,34 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/about\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/about\/" \/>/);
                 rendered.string.should.match(/<meta name="referrer" content="no-referrer-when-downgrade" \/>/);
                 rendered.string.should.match(/<meta name="description" content="all about our blog" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="website" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="About" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="all about our blog" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/about\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/test-image-about.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/about\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/test-image-about.png" \/>/);
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="About" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="all about our blog" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/about\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/test-image-about.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/about\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/test-image-about.png" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Article"/);
                 rendered.string.should.match(/"publisher": {/);
                 rendered.string.should.match(/"@type": "Organization"/);
                 rendered.string.should.match(/"name": "Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/about\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/about\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/test-image-about.png"/);
-                rendered.string.should.match(/"image\": \"http:\/\/localhost:82832\/content\/images\/test-author-image.png\"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/test-image-about.png"/);
+                rendered.string.should.match(/"image\": \"http:\/\/localhost:65530\/content\/images\/test-author-image.png\"/);
                 rendered.string.should.match(/"description": "all about our blog"/);
 
                 done();
@@ -196,34 +203,34 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/about\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/about\/" \/>/);
                 rendered.string.should.match(/<meta name="referrer" content="no-referrer-when-downgrade" \/>/);
                 rendered.string.should.match(/<meta name="description" content="all about our blog" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="website" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Custom Facebook title" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="Custom Facebook description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/about\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/test-og-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/about\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/test-og-image.png" \/>/);
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Custom Twitter title" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="Custom Twitter description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/about\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/test-twitter-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/about\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/test-twitter-image.png" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Article"/);
                 rendered.string.should.match(/"publisher": {/);
                 rendered.string.should.match(/"@type": "Organization"/);
                 rendered.string.should.match(/"name": "Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/about\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/about\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/test-image-about.png"/);
-                rendered.string.should.match(/"image\": \"http:\/\/localhost:82832\/content\/images\/test-author-image.png\"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/test-image-about.png"/);
+                rendered.string.should.match(/"image\": \"http:\/\/localhost:65530\/content\/images\/test-author-image.png\"/);
                 rendered.string.should.match(/"description": "all about our blog"/);
 
                 done();
@@ -244,27 +251,27 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/tag\/tagtitle\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/tag\/tagtitle\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="tag meta description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="website" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="tag meta title" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="tag meta description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/tag\/tagtitle\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/tag-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/tag\/tagtitle\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/tag-image.png" \/>/);
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="tag meta title" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="tag meta description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/tag\/tagtitle\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/tag-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/tag\/tagtitle\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/tag-image.png" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Series"/);
                 rendered.string.should.match(/"publisher": {\n        "@type": "Organization",\n        "name": "Ghost",/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/tag\/tagtitle\/"/);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/tag-image.png"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/tag\/tagtitle\/"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/tag-image.png"/);
                 rendered.string.should.match(/"name": "tagtitle"/);
                 rendered.string.should.match(/"description": "tag meta description"/);
 
@@ -287,27 +294,27 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/tag\/tagtitle\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/tag\/tagtitle\/" \/>/);
                 rendered.string.should.not.match(/<meta name="description"/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="website" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="tagtitle - Ghost" \/>/);
                 rendered.string.should.not.match(/<meta property="og:description"/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/tag\/tagtitle\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/tag-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/tag\/tagtitle\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/tag-image.png" \/>/);
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="tagtitle - Ghost" \/>/);
                 rendered.string.should.not.match(/<meta name="twitter:description"/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/tag\/tagtitle\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/tag-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/tag\/tagtitle\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/tag-image.png" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Series"/);
                 rendered.string.should.match(/"publisher": {\n        "@type": "Organization",\n        "name": "Ghost",/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/tag\/tagtitle\/"/);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/tag-image.png"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/tag\/tagtitle\/"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/tag-image.png"/);
                 rendered.string.should.match(/"name": "tagtitle"/);
                 rendered.string.should.not.match(/"description":/);
 
@@ -352,10 +359,10 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/tag\/tagtitle\/page\/2\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/tag\/tagtitle\/page\/2\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
                 rendered.string.should.match(/<meta name="description" content="tag meta description" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.not.match(/<meta property="og/);
                 rendered.string.should.not.match(/<script type=\"application\/ld\+json\">/);
 
@@ -381,28 +388,28 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/author\/AuthorName\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/author\/AuthorName\/" \/>/);
                 rendered.string.should.not.match(/<meta name="description"/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="profile" \/>/);
                 rendered.string.should.not.match(/<meta property="og:description"/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/author\/AuthorName\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/author-cover-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/author\/AuthorName\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/author-cover-image.png" \/>/);
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser\" \/>/);
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Author name - Ghost" \/>/);
                 rendered.string.should.not.match(/<meta name="twitter:description"/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/author\/AuthorName\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/author\/AuthorName\/" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/author-cover-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/author-cover-image.png" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"sameAs": \[\n        "http:\/\/authorwebsite.com",\n        "https:\/\/www.facebook.com\/testuser",\n        "https:\/\/twitter.com\/testuser"\n    \]/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/AuthorName\/"/);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/author-cover-image.png"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/AuthorName\/"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/author-cover-image.png"/);
                 rendered.string.should.match(/"name": "Author name"/);
                 rendered.string.should.not.match(/"description":/);
 
@@ -433,9 +440,9 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/author\/AuthorName\/page\/2\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/author\/AuthorName\/page\/2\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.not.match(/<meta name="description" /);
                 rendered.string.should.not.match(/<meta property="og/);
                 rendered.string.should.not.match(/<script type=\"application\/ld\+json\">/);
@@ -452,7 +459,7 @@ describe('{{ghost_head}} helper', function () {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.9" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 done();
             }).catch(done);
@@ -496,15 +503,15 @@ describe('{{ghost_head}} helper', function () {
 
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="article" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Custom Facebook title" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="Custom Facebook description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/test-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/test-image.png" \/>/);
                 rendered.string.should.match(re1);
                 rendered.string.should.match(re2);
                 rendered.string.should.match(/<meta property="article:tag" content="tag1" \/>/);
@@ -513,8 +520,8 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/test-twitter-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/test-twitter-image.png" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Article"/);
@@ -524,20 +531,20 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/"author": {/);
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"name": "Author name"/);
-                rendered.string.should.match(/"image\": \"http:\/\/localhost:82832\/content\/images\/test-author-image.png\"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/Author\/"/);
+                rendered.string.should.match(/"image\": \"http:\/\/localhost:65530\/content\/images\/test-author-image.png\"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/Author\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
                 rendered.string.should.not.match(/"description": "Author bio"/);
                 rendered.string.should.match(/"headline": "Welcome to Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/post\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/post\/"/);
                 rendered.string.should.match(re3);
                 rendered.string.should.match(re4);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/test-image.png"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/test-image.png"/);
                 rendered.string.should.match(/"keywords": "tag1, tag2, tag3"/);
                 rendered.string.should.match(/"description": "blog description"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 post.should.eql(postBk);
 
@@ -583,15 +590,15 @@ describe('{{ghost_head}} helper', function () {
 
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="article" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="post custom excerpt" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/test-facebook-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/test-facebook-image.png" \/>/);
                 rendered.string.should.match(re1);
                 rendered.string.should.match(re2);
                 rendered.string.should.match(/<meta property="article:tag" content="tag1" \/>/);
@@ -600,8 +607,8 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Custom Twitter title" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="post custom excerpt" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/test-twitter-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/test-twitter-image.png" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Article"/);
@@ -611,20 +618,20 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/"author": {/);
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"name": "Author name"/);
-                rendered.string.should.match(/"image\": \"http:\/\/localhost:82832\/content\/images\/test-author-image.png\"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/Author\/"/);
+                rendered.string.should.match(/"image\": \"http:\/\/localhost:65530\/content\/images\/test-author-image.png\"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/Author\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
                 rendered.string.should.not.match(/"description": "Author bio"/);
                 rendered.string.should.match(/"headline": "Welcome to Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/post\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/post\/"/);
                 rendered.string.should.match(re3);
                 rendered.string.should.match(re4);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/test-image.png"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/test-image.png"/);
                 rendered.string.should.match(/"keywords": "tag1, tag2, tag3"/);
                 rendered.string.should.match(/"description": "post custom excerpt"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 post.should.eql(postBk);
 
@@ -651,17 +658,17 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.not.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="article" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="This is a short post" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/post\/" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/post\/" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="This is a short post" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/post\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/post\/" \/>/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Article"/);
                 rendered.string.should.match(/"publisher": {/);
@@ -670,14 +677,14 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/"author": {/);
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"name": "Author name"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/Author\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/Author\/"/);
                 rendered.string.should.not.match(/"description": "Author bio"/);
                 rendered.string.should.match(/"headline": "Welcome to Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/post\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/post\/"/);
                 rendered.string.should.match(/"description": "This is a short post"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 post.should.eql(postBk);
 
@@ -722,15 +729,15 @@ describe('{{ghost_head}} helper', function () {
 
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.not.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.not.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="article" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Custom Facebook title" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/test-facebook-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/test-facebook-image.png" \/>/);
                 rendered.string.should.match(re1);
                 rendered.string.should.match(re2);
                 rendered.string.should.match(/<meta property="article:tag" content="tag1" \/>/);
@@ -739,8 +746,8 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Custom Twitter title" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/test-twitter-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/test-twitter-image.png" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Article"/);
@@ -750,20 +757,20 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/"author": {/);
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"name": "Author name"/);
-                rendered.string.should.match(/"image\": \"http:\/\/localhost:82832\/content\/images\/test-author-image.png\"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/Author\/"/);
+                rendered.string.should.match(/"image\": \"http:\/\/localhost:65530\/content\/images\/test-author-image.png\"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/Author\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
                 rendered.string.should.not.match(/"description": "Author bio"/);
                 rendered.string.should.match(/"headline": "Welcome to Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/post\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/post\/"/);
                 rendered.string.should.match(re3);
                 rendered.string.should.match(re4);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/test-image.png"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/test-image.png"/);
                 rendered.string.should.match(/"keywords": "tag1, tag2, tag3"/);
                 rendered.string.should.match(/"description": "blog description"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 post.should.eql(postBk);
 
@@ -802,15 +809,15 @@ describe('{{ghost_head}} helper', function () {
 
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog &quot;test&quot; description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="article" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Welcome to Ghost &quot;test&quot;" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="blog &quot;test&quot; description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/test-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/test-image.png" \/>/);
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.match(re1);
                 rendered.string.should.match(re2);
@@ -820,9 +827,9 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Welcome to Ghost &quot;test&quot;" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="blog &quot;test&quot; description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/post\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/post\/" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/test-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/test-image.png" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/"@type": "Article"/);
@@ -832,20 +839,20 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/"author": {/);
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"name": "Author name"/);
-                rendered.string.should.match(/"image\": \"http:\/\/localhost:82832\/content\/images\/test-author-image.png\"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/Author\/"/);
+                rendered.string.should.match(/"image\": \"http:\/\/localhost:65530\/content\/images\/test-author-image.png\"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/Author\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
                 rendered.string.should.match(/"headline": "Welcome to Ghost &quot;test&quot;"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/post\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/post\/"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(re3);
                 rendered.string.should.match(re4);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/test-image.png"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/test-image.png"/);
                 rendered.string.should.match(/"keywords": "tag1, tag2, tag3"/);
                 rendered.string.should.match(/"description": "blog &quot;test&quot; description"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 done();
             }).catch(done);
@@ -880,15 +887,15 @@ describe('{{ghost_head}} helper', function () {
 
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="article" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:82832\/content\/images\/test-image.png" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta property="og:image" content="http:\/\/localhost:65530\/content\/images\/test-image.png" \/>/);
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.match(re1);
                 rendered.string.should.match(re2);
@@ -896,8 +903,8 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/<meta name="twitter:card" content="summary_large_image" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:82832\/content\/images\/test-image.png" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:image" content="http:\/\/localhost:65530\/content\/images\/test-image.png" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
@@ -907,20 +914,20 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/"author": {/);
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"name": "Author name"/);
-                rendered.string.should.match(/"image\": \"http:\/\/localhost:82832\/content\/images\/test-author-image.png\"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/Author\/"/);
+                rendered.string.should.match(/"image\": \"http:\/\/localhost:65530\/content\/images\/test-author-image.png\"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/Author\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
                 rendered.string.should.match(/"headline": "Welcome to Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/post\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/post\/"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(re3);
                 rendered.string.should.match(re4);
-                rendered.string.should.match(/"image": "http:\/\/localhost:82832\/content\/images\/test-image.png"/);
+                rendered.string.should.match(/"image": "http:\/\/localhost:65530\/content\/images\/test-image.png"/);
                 rendered.string.should.not.match(/"keywords":/);
                 rendered.string.should.match(/"description": "blog description"/);
                 rendered.string.should.match(/"@context": "https:\/\/schema.org"/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 done();
             }).catch(done);
@@ -956,14 +963,14 @@ describe('{{ghost_head}} helper', function () {
 
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="article" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/post\/" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/post\/" \/>/);
                 rendered.string.should.match(/<meta property="article:author" content="https:\/\/www.facebook.com\/testuser" \/>/);
                 rendered.string.should.not.match(/<meta property="og:image"/);
                 rendered.string.should.match(re1);
@@ -974,7 +981,7 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/<meta name="twitter:card" content="summary" \/>/);
                 rendered.string.should.match(/<meta name="twitter:title" content="Welcome to Ghost" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="blog description" \/>/);
-                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:82832\/post\/" \/>/);
+                rendered.string.should.match(/<meta name="twitter:url" content="http:\/\/localhost:65530\/post\/" \/>/);
                 rendered.string.should.match(/<meta name="twitter:creator" content="@testuser" \/>/);
                 rendered.string.should.not.match(/<meta name="twitter:image"/);
                 rendered.string.should.match(/<script type=\"application\/ld\+json\">/);
@@ -987,16 +994,16 @@ describe('{{ghost_head}} helper', function () {
                 rendered.string.should.match(/"@type": "Person"/);
                 rendered.string.should.match(/"name": "Author name"/);
                 rendered.string.should.not.match(/"image\"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/author\/Author\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/author\/Author\/"/);
                 rendered.string.should.match(/"sameAs": \[\n            "http:\/\/authorwebsite.com",\n            "https:\/\/www.facebook.com\/testuser",\n            "https:\/\/twitter.com\/testuser"\n        \]/);
                 rendered.string.should.match(/"headline": "Welcome to Ghost"/);
-                rendered.string.should.match(/"url": "http:\/\/localhost:82832\/post\/"/);
+                rendered.string.should.match(/"url": "http:\/\/localhost:65530\/post\/"/);
                 rendered.string.should.match(re3);
                 rendered.string.should.match(re4);
                 rendered.string.should.match(/"keywords": "tag1, tag2, tag3"/);
                 rendered.string.should.match(/"description": "blog description"/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 done();
             }).catch(done);
@@ -1009,13 +1016,13 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/featured\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/featured\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<meta property="og:site_name" content="Ghost" \/>/);
                 rendered.string.should.match(/<meta property="og:type" content="website" \/>/);
                 rendered.string.should.match(/<meta property="og:title" content="Ghost" \/>/);
-                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:82832\/featured\/" \/>/);
+                rendered.string.should.match(/<meta property="og:url" content="http:\/\/localhost:65530\/featured\/" \/>/);
 
                 rendered.string.should.not.match(/<script type=\"application\/ld\+json\">/);
                 rendered.string.should.not.match(/<meta name="description" /);
@@ -1040,7 +1047,7 @@ describe('{{ghost_head}} helper', function () {
                 should.exist(rendered);
                 rendered.string.should.not.match(/<meta name="description" /);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta property="og:description" content="This is a short post" \/>/);
                 rendered.string.should.match(/<meta name="twitter:description" content="This is a short post" \/>/);
 
@@ -1063,9 +1070,9 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/about\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/about\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
 
                 done();
             }).catch(done);
@@ -1083,11 +1090,11 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/page\/3\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/page\/3\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="prev" href="http:\/\/localhost:82832\/page\/2\/" \/>/);
-                rendered.string.should.match(/<link rel="next" href="http:\/\/localhost:82832\/page\/4\/" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="prev" href="http:\/\/localhost:65530\/page\/2\/" \/>/);
+                rendered.string.should.match(/<link rel="next" href="http:\/\/localhost:65530\/page\/4\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.not.match(/<meta property="og/);
                 rendered.string.should.not.match(/<script type=\"application\/ld\+json\">/);
 
@@ -1107,11 +1114,11 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.ico" type="image\/x-icon" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/page\/2\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/page\/2\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="prev" href="http:\/\/localhost:82832\/" \/>/);
-                rendered.string.should.match(/<link rel="next" href="http:\/\/localhost:82832\/page\/3\/" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="prev" href="http:\/\/localhost:65530\/" \/>/);
+                rendered.string.should.match(/<link rel="next" href="http:\/\/localhost:65530\/page\/3\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.not.match(/<meta property="og/);
                 rendered.string.should.not.match(/<meta name="description" /);
                 rendered.string.should.not.match(/<script type=\"application\/ld\+json\">/);
@@ -1125,7 +1132,7 @@ describe('{{ghost_head}} helper', function () {
                 localSettingsCache.icon = '/content/images/favicon.png';
 
                 configUtils.set({
-                    url: 'http://localhost:82832/blog/'
+                    url: 'http://localhost:65530/blog/'
                 });
             });
 
@@ -1136,9 +1143,9 @@ describe('{{ghost_head}} helper', function () {
                 ).then(function (rendered) {
                     should.exist(rendered);
                     rendered.string.should.match(/<link rel="shortcut icon" href="\/blog\/favicon.png" type="image\/png" \/>/);
-                    rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/blog\/" \/>/);
+                    rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/blog\/" \/>/);
                     rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                    rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/blog\/rss\/" \/>/);
+                    rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/blog\/rss\/" \/>/);
                     rendered.string.should.not.match(/<meta name="description" /);
 
                     done();
@@ -1162,7 +1169,7 @@ describe('{{ghost_head}} helper', function () {
             });
 
             configUtils.set({
-                url: 'http://localhost:82832/blog/',
+                url: 'http://localhost:65530/blog/',
                 referrerPolicy: 'origin'
             });
         });
@@ -1197,7 +1204,7 @@ describe('{{ghost_head}} helper', function () {
             });
 
             configUtils.set({
-                url: 'http://localhost:82832/',
+                url: 'http://localhost:65530/',
                 privacy: {
                     useStructuredData: false
                 }
@@ -1229,11 +1236,11 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.png" type="image\/png" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/post\/" \/>/);
-                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:82832\/post\/amp\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/post\/" \/>/);
+                rendered.string.should.match(/<link rel="amphtml" href="http:\/\/localhost:65530\/post\/amp\/" \/>/);
                 rendered.string.should.match(/<meta name="description" content="blog description" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.not.match(/<meta property="og/);
                 rendered.string.should.not.match(/<script type=\"application\/ld\+json\">/);
 
@@ -1257,7 +1264,7 @@ describe('{{ghost_head}} helper', function () {
             });
 
             configUtils.set({
-                url: 'http://localhost:82832/'
+                url: 'http://localhost:65530/'
             });
         });
 
@@ -1268,9 +1275,9 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.png" type="image\/png" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.match(/<style>body {background: red;}<\/style>/);
 
                 // No default meta desc in paged context
@@ -1343,9 +1350,9 @@ describe('{{ghost_head}} helper', function () {
             ).then(function (rendered) {
                 should.exist(rendered);
                 rendered.string.should.match(/<link rel="shortcut icon" href="\/favicon.png" type="image\/png" \/>/);
-                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:82832\/" \/>/);
+                rendered.string.should.match(/<link rel="canonical" href="http:\/\/localhost:65530\/" \/>/);
                 rendered.string.should.match(/<meta name="generator" content="Ghost 0.3" \/>/);
-                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:82832\/rss\/" \/>/);
+                rendered.string.should.match(/<link rel="alternate" type="application\/rss\+xml" title="Ghost" href="http:\/\/localhost:65530\/rss\/" \/>/);
                 rendered.string.should.not.match(/<style>body {background: red;}<\/style>/);
 
                 done();
@@ -1356,7 +1363,7 @@ describe('{{ghost_head}} helper', function () {
     describe('with Ajax Helper', function () {
         before(function () {
             configUtils.set({
-                url: 'http://localhost:82832/'
+                url: 'http://localhost:65530/'
             });
         });
 
@@ -1430,7 +1437,7 @@ describe('{{ghost_head}} helper', function () {
 
         beforeEach(function () {
             configUtils.set({
-                url: 'http://localhost:82832/'
+                url: 'http://localhost:65530/'
             });
 
             sandbox.stub(settingsCache, 'get', function (key) {
